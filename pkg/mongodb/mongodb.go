@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"InternService/config"
+	"InternService/internal/storage/mongodb/repository"
 	"InternService/pkg/logger"
 	"context"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -9,17 +10,12 @@ import (
 	"time"
 )
 
-type MongoInstance struct {
-	Client   *mongo.Client
-	Database *mongo.Database
-}
-
-func GetMongoConn(ctx context.Context, c config.Config) (MongoInstance, error) {
+func GetMongoConn(ctx context.Context, c config.Config) (repository.MongoInstance, error) {
 	log := logger.GetLogger()
 	client, clientError := mongo.NewClient(options.Client().ApplyURI(c.MongoDB.DatabaseConnection))
 	if clientError != nil {
 		log.Warn().Err(clientError).Msg("Unable to get mongoClient.")
-		return MongoInstance{nil, nil}, clientError
+		return repository.MongoInstance{}, clientError
 	}
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
@@ -28,10 +24,10 @@ func GetMongoConn(ctx context.Context, c config.Config) (MongoInstance, error) {
 
 	if connectionError != nil {
 		log.Warn().Err(connectionError).Msg("Unable to connect to mongo db.")
-		return MongoInstance{nil, nil}, connectionError
+		return repository.MongoInstance{}, connectionError
 	}
 	log.Info().Msg("Connected to mongodb successfully.")
-	return MongoInstance{
+	return repository.MongoInstance{
 		Client:   client,
 		Database: db,
 	}, nil
