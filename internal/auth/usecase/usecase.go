@@ -5,10 +5,12 @@ import (
 	"InternService/internal/auth/repository"
 	"InternService/internal/utilities"
 	"InternService/internal/utilities/constants"
+	"InternService/internal/utilities/jwtokens"
 	"InternService/internal/utilities/response"
 	"context"
 	"github.com/gofiber/fiber/v2"
-	"go.mongodb.org/mongo-driver/bson"
+	"os"
+	"strconv"
 	"strings"
 )
 
@@ -46,29 +48,62 @@ func (a AuthUseCase) Register(ctx *fiber.Ctx, body auth.SignUpUserRequest) error
 			Status: fiber.StatusBadRequest,
 		})
 	}
-	UserCollection, _ := a.rep.Mongo.GetCollection("Users")
-	// check if email is already in use
-	existingRecord := UserCollection.FindOne(
-		ctx.Context(),
-		bson.D{{Key: "email", Value: trimmedEmail}},
-	)
-	existingUser := &auth.User{}
-	existingRecord.Decode(existingUser)
-	if existingUser.ID != "" {
-		return response.Response(response.ResponseParams{
-			Ctx:    ctx,
-			Info:   constants.ResponseMessages.EmailAlreadyInUse,
-			Status: fiber.StatusBadRequest,
-		})
+	err := a.rep.GetUserByEmail(ctx, email)
+	if err != nil {
+		return err
 	}
 	now := utilities.MakeTimestamp()
-	NewUser := new(auth.User)
-	NewUser.Created = now
-	NewUser.Email = trimmedEmail
-	NewUser.ID = ""
-	NewUser.Name = trimmedName
-	NewUser.Role = trimmedRole
-	NewUser.Updated = now
+	NewUser := auth.User{
+		AvatarLink: "",
+		Email:      trimmedEmail,
+		Name:       trimmedName,
+		Role:       trimmedRole,
+		Created:    now,
+		ID:         "",
+		Updated:    now,
+	}
+	err := a.rep.CreateUser(ctx, NewUser)
+	PasswordCollection, _ := a.rep.Mongo.GetCollection("Password")
+
+	// create password hash
+	hash, hashError := utilities.MakeHash(trimmedPassword)
+	if hashError != nil {
+		return response.Response(response.ResponseParams{
+			Ctx:    ctx,
+			Info:   constants.ResponseMessages.InternalServerError,
+			Status: fiber.StatusInternalServerError,
+		})
+	}
+	// create a new Password record and insert it
+	NewPassword := new(auth.Password)
+	NewPassword.Created = now
+	NewPassword.Hash = hash
+	NewPassword.ID = ""
+	NewPassword.Updated = now
+	NewPassword.UserId = createdUser.ID
+	_, insertionError = PasswordCollection.InsertOne(ctx.Context(), NewPassword)
+	if insertionError != nil {
+		return response.Response(response.ResponseParams{
+			Ctx:    ctx,
+			Info:   constants.ResponseMessages.InternalServerError,
+			Status: fiber.StatusInternalServerError,
+		})
+	}
+	accessExpiration, expirationError := strconv.Atoi(os.Getenv("TOKENS_ACCESS_EXPIRATION"))
+	if expirationError != nil {
+		accessExpiration = 24
+	}
+	token, tokenError := jwtokens.GenerateJWT(jwtokens.GenerateJWTParams{
+		ExpiresIn: int64(accessExpiration),
+		UserId:    createdUser.ID,
+	})
+	if tokenError != nil {
+		return response.Response(response.ResponseParams{
+			Ctx:    ctx,
+			Info:   constants.ResponseMessages.InternalServerError,
+			Status: fiber.StatusInternalServerError,
+		})
+	}
 }
 
 func (a AuthUseCase) Authenticate(ctx *fiber.Ctx, email, password string) (*auth.User, string, error) {

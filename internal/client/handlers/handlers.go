@@ -2,13 +2,9 @@ package handlers
 
 import (
 	"InternService/internal/auth"
-	"InternService/internal/utilities"
 	"InternService/internal/utilities/constants"
-	"InternService/internal/utilities/jwtokens"
 	"InternService/internal/utilities/response"
 	"github.com/gofiber/fiber/v2"
-	"os"
-	"strconv"
 )
 
 type AppContext struct {
@@ -124,78 +120,6 @@ func (a *AppContext) SignUpHandler(ctx *fiber.Ctx) error {
 		})
 	}
 	a.authUse.Register(ctx, body)
-
-	// load User schema
-
-	// create a new User record, insert it and get back the ID
-	now := utilities.MakeTimestamp()
-	NewUser := new(auth.User)
-	NewUser.Created = now
-	NewUser.Email = trimmedEmail
-	NewUser.ID = ""
-	NewUser.Name = trimmedName
-	NewUser.Role = trimmedRole
-	NewUser.Updated = now
-	insertionResult, insertionError := UserCollection.InsertOne(ctx.Context(), NewUser)
-	if insertionError != nil {
-		return response.Response(response.ResponseParams{
-			Ctx:    ctx,
-			Info:   constants.ResponseMessages.InternalServerError,
-			Status: fiber.StatusInternalServerError,
-		})
-	}
-	createdRecord := UserCollection.FindOne(
-		ctx.Context(),
-		bson.D{{Key: "_id", Value: insertionResult.InsertedID}},
-	)
-	createdUser := &auth.User{}
-	createdRecord.Decode(createdUser)
-
-	// load Password schema
-	PasswordCollection := Instance.Database.Collection("Password")
-
-	// create password hash
-	hash, hashError := utilities.MakeHash(trimmedPassword)
-	if hashError != nil {
-		return response.Response(response.ResponseParams{
-			Ctx:    ctx,
-			Info:   constants.ResponseMessages.InternalServerError,
-			Status: fiber.StatusInternalServerError,
-		})
-	}
-
-	// create a new Password record and insert it
-	NewPassword := new(auth.Password)
-	NewPassword.Created = now
-	NewPassword.Hash = hash
-	NewPassword.ID = ""
-	NewPassword.Updated = now
-	NewPassword.UserId = createdUser.ID
-	_, insertionError = PasswordCollection.InsertOne(ctx.Context(), NewPassword)
-	if insertionError != nil {
-		return response.Response(response.ResponseParams{
-			Ctx:    ctx,
-			Info:   constants.ResponseMessages.InternalServerError,
-			Status: fiber.StatusInternalServerError,
-		})
-	}
-
-	accessExpiration, expirationError := strconv.Atoi(os.Getenv("TOKENS_ACCESS_EXPIRATION"))
-	if expirationError != nil {
-		accessExpiration = 24
-	}
-	token, tokenError := jwtokens.GenerateJWT(jwtokens.GenerateJWTParams{
-		ExpiresIn: int64(accessExpiration),
-		UserId:    createdUser.ID,
-	})
-	if tokenError != nil {
-		return response.Response(response.ResponseParams{
-			Ctx:    ctx,
-			Info:   constants.ResponseMessages.InternalServerError,
-			Status: fiber.StatusInternalServerError,
-		})
-	}
-
 	return response.Response(response.ResponseParams{
 		Ctx: ctx,
 		Data: fiber.Map{

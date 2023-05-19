@@ -6,9 +6,9 @@ import (
 )
 
 type AuthRepository interface {
-	CreateUser(ctx context.Context, user *User) error
+	CreateUser(ctx *fiber.Ctx, user User) error
 	GetUserById(ctx context.Context, id int) error
-	GetUserByEmail(ctx context.Context, email string) error
+	GetUserByEmail(ctx *fiber.Ctx, email string) error
 	Update(ctx context.Context, user *User) error
 	Delete(ctx context.Context, user *User) error
 }
