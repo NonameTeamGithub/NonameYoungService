@@ -16,8 +16,9 @@ func main() {
 	if err := pool.Ping(ctx); err != nil {
 		log.Fatal().Err(err).Msg("unable to get pool")
 	}
-	postgresql.MigratesDown(ctx, Config)
-	postgresql.MigratesUp(ctx, Config)
+	//postgresql.MigratesDown(Config)
+	//postgresql.MigratesUp(ctx, Config)
+	postgresql.InitMigrationsOnStart(Config)
 	app := client.NewClient(ctx)
 	log.Fatal().Err(app.Listen(":8080")).Msg("Something went wrong")
 }

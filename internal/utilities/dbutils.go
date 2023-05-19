@@ -1,4 +1,4 @@
-package middleware
+package utilities
 
 import (
 	"InternService/pkg/logger"

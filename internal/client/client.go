@@ -4,6 +4,7 @@ import (
 	"InternService/internal/client/handlers"
 	"context"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 )
 
 func NewClient(ctx context.Context) *fiber.App {
@@ -49,6 +50,7 @@ func NewClient(ctx context.Context) *fiber.App {
 		ColorScheme:                  fiber.Colors{},
 		RequestMethods:               nil,
 	})
+	app.Use(logger.New())
 	handlers.InitHandlers(app)
 	return app
 }

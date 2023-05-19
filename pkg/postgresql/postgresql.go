@@ -2,8 +2,8 @@ package postgresql
 
 import (
 	"InternService/config"
+	"InternService/internal/utilities"
 	"InternService/pkg/logger"
-	"InternService/pkg/middleware"
 	"context"
 	"fmt"
 	"github.com/golang-migrate/migrate/v4"
@@ -17,7 +17,7 @@ import (
 
 func GetPool(ctx context.Context, c config.Config) (connect *pgxpool.Pool) {
 	log := logger.GetLogger()
-	err := middleware.ConnectWithTries(func() error {
+	err := utilities.ConnectWithTries(func() error {
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 		var err error
@@ -56,7 +56,7 @@ func MigratesUp(ctx context.Context, c config.Config) {
 	log.Info().Msg("Migration up done successfully!")
 }
 
-func MigratesDown(ctx context.Context, c config.Config) {
+func MigratesDown(c config.Config) {
 	log := logger.GetLogger()
 	dbUrl := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=%s",
 		c.PostgreSQLDB.User,
@@ -71,6 +71,27 @@ func MigratesDown(ctx context.Context, c config.Config) {
 	}
 	if err := m.Down(); err != nil {
 		log.Warn().Err(err).Msg("Unable to down migrations.")
+	} else {
+		log.Info().Msg("Migration down successfully!")
 	}
-	log.Info().Msg("Migration down successfully!")
+}
+
+func InitMigrationsOnStart(c config.Config) {
+	log := logger.GetLogger()
+	dbUrl := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=%s",
+		c.PostgreSQLDB.User,
+		c.PostgreSQLDB.Pass,
+		c.PostgreSQLDB.Host,
+		c.PostgreSQLDB.Port,
+		c.PostgreSQLDB.Dbname,
+		c.PostgreSQLDB.SSLMode)
+	m, err := migrate.New("file://../migrations/", dbUrl)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Unable to get migrator.")
+	}
+	if err := m.Migrate(1); err != nil && err != migrate.ErrNoChange {
+		log.Warn().Err(err).Msg("Unable to rollback migrations.")
+	} else {
+		log.Info().Msg("Migration down successfully!")
+	}
 }

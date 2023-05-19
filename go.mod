@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/fatih/color v1.15.0
-	github.com/gofiber/fiber/v2 v2.45.0
+	github.com/gofiber/fiber/v2 v2.46.0
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/jackc/pgx/v5 v5.3.1
 	github.com/rs/zerolog v1.29.1
