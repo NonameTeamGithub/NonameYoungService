@@ -6,7 +6,12 @@ import (
 	"InternService/pkg/middleware"
 	"context"
 	"fmt"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"time"
 )
 
@@ -16,14 +21,13 @@ func GetPool(ctx context.Context, c config.Config) (connect *pgxpool.Pool) {
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 		var err error
-		connect, err = pgxpool.Connect(ctx, fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?%s&%s",
+		connect, err = pgxpool.New(ctx, fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=%s",
 			c.PostgreSQLDB.User,
 			c.PostgreSQLDB.Pass,
 			c.PostgreSQLDB.Host,
 			c.PostgreSQLDB.Port,
 			c.PostgreSQLDB.Dbname,
-			c.PostgreSQLDB.SSLMode,
-			c.PostgreSQLDB.MaxConns))
+			c.PostgreSQLDB.SSLMode))
 		return err
 	}, 3, time.Second*3)
 	if err != nil {
@@ -31,4 +35,64 @@ func GetPool(ctx context.Context, c config.Config) (connect *pgxpool.Pool) {
 	}
 	log.Info().Msg("connected to database successfully")
 	return connect
+}
+
+func MigrateAllUp(ctx context.Context, c config.Config) {
+	//MigrateInternsUp(ctx, c)
+	MigrateCanditates(c)
+	MigrateCurators(c)
+	MigrateMentors(c)
+	MigrateHrs(c)
+}
+
+func MigratesUp(ctx context.Context, c config.Config) {
+	log := logger.GetLogger()
+	dbUrl := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=%s",
+		c.PostgreSQLDB.User,
+		c.PostgreSQLDB.Pass,
+		c.PostgreSQLDB.Host,
+		c.PostgreSQLDB.Port,
+		c.PostgreSQLDB.Dbname,
+		c.PostgreSQLDB.SSLMode)
+	m, err := migrate.New("file://../migrations/", dbUrl)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Unable to get migrator.")
+	}
+	if err := m.Up(); err != nil {
+		log.Warn().Err(err).Msg("Unable to up migrations.")
+	}
+}
+
+func MigratesDown(ctx context.Context, c config.Config) {
+	log := logger.GetLogger()
+	dbUrl := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=%s",
+		c.PostgreSQLDB.User,
+		c.PostgreSQLDB.Pass,
+		c.PostgreSQLDB.Host,
+		c.PostgreSQLDB.Port,
+		c.PostgreSQLDB.Dbname,
+		c.PostgreSQLDB.SSLMode)
+	m, err := migrate.New("file://../migrations/", dbUrl)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Unable to get migrator.")
+	}
+	if err := m.Down(); err != nil {
+		log.Warn().Err(err).Msg("Unable to down migrations.")
+	}
+}
+
+func MigrateCanditates(c config.Config) {
+
+}
+
+func MigrateMentors(c config.Config) {
+
+}
+
+func MigrateCurators(c config.Config) {
+
+}
+
+func MigrateHrs(c config.Config) {
+
 }

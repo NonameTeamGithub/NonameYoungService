@@ -6,7 +6,6 @@ import (
 	"github.com/rs/zerolog"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 )
@@ -25,7 +24,7 @@ func GetLogger() zerolog.Logger {
 					return "|" + filepath.Base(fmt.Sprintf("%s|", i))
 				},
 				FormatErrFieldName: func(i interface{}) string {
-					return c.Sprintf("|" + strings.ToUpper(fmt.Sprintf("[%s] -> ", i)))
+					return c.Sprintf("| -> ")
 				},
 			}).Level(zerolog.InfoLevel).With().Timestamp().Caller().Logger()
 	})

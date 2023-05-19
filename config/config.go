@@ -24,7 +24,7 @@ type Config struct {
 func LoadConfig() *viper.Viper {
 	log := logger.GetLogger()
 	v := viper.New()
-	v.AddConfigPath("./")
+	v.AddConfigPath("../config/")
 	v.SetConfigName("config")
 	v.SetConfigType("yaml")
 	err := v.ReadInConfig()
