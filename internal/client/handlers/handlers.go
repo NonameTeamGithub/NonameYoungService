@@ -5,7 +5,6 @@ import (
 	"InternService/internal/utilities/constants"
 	"InternService/internal/utilities/response"
 	"github.com/gofiber/fiber/v2"
-	"strings"
 )
 
 type AppContext struct {
@@ -27,36 +26,15 @@ func (a *AppContext) LogInHandler(ctx *fiber.Ctx) error {
 	var body auth.SignInUserRequest
 	err := ctx.BodyParser(&body)
 	if err != nil {
-		return err
-	}
-	if err != nil {
 		return response.Response(response.ResponseParams{
 			Ctx:    ctx,
 			Info:   constants.ResponseMessages.InternalServerError,
 			Status: fiber.StatusInternalServerError,
 		})
 	}
-	user, err := a.authUse.Authenticate()
+	user, token, err := a.authUse.Authenticate(ctx, body.Email, body.Password)
 	if err != nil {
 		return err
-	} else {
-
-	}
-	if email == "" || password == "" {
-		return response.Response(response.ResponseParams{
-			Ctx:    ctx,
-			Info:   constants.ResponseMessages.MissingData,
-			Status: fiber.StatusBadRequest,
-		})
-	}
-	trimmedEmail := strings.TrimSpace(email)
-	trimmedPassword := strings.TrimSpace(password)
-	if trimmedEmail == "" || trimmedPassword == "" {
-		return response.Response(response.ResponseParams{
-			Ctx:    ctx,
-			Info:   constants.ResponseMessages.MissingData,
-			Status: fiber.StatusBadRequest,
-		})
 	}
 	return response.Response(response.ResponseParams{
 		Ctx: ctx,

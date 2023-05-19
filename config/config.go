@@ -9,6 +9,8 @@ type Config struct {
 	RedisDB struct {
 	}
 	MongoDB struct {
+		DatabaseConnection string
+		DatabaseName       string
 	}
 	PostgreSQLDB struct {
 		User     string
@@ -19,6 +21,7 @@ type Config struct {
 		SSLMode  string
 		MaxConns string
 	}
+	TokenAccessExpiration int
 }
 
 func LoadConfig() *viper.Viper {

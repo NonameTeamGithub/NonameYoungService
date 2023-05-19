@@ -18,7 +18,7 @@ type AuthRepository interface {
 
 type AuthUseCase interface {
 	Register(ctx *fiber.Ctx, user *User)
-	Authenticate(ctx *fiber.Ctx, email, password string) (*User, error)
+	Authenticate(ctx *fiber.Ctx, email, password string) (*User, string, error)
 	Authorize(ctx *fiber.Ctx, user *User, permission string) bool
 	GrantPermission(ctx *fiber.Ctx, user *User, permission string) error
 	RevokePermission(ctx *fiber.Ctx, user *User, permission string) error
