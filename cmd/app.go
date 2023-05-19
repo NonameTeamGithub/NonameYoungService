@@ -22,3 +22,7 @@ func main() {
 	app := client.NewClient(ctx)
 	log.Fatal().Err(app.Listen(":8080")).Msg("Something went wrong")
 }
+
+func initHandlers() {
+
+}

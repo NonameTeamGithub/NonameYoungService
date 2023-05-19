@@ -5,3 +5,4 @@ updateGit:
 	git rm --cached config/config.yaml
 	git commit -m "update"
 	git push
+
