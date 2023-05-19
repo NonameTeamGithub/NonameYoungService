@@ -37,14 +37,6 @@ func GetPool(ctx context.Context, c config.Config) (connect *pgxpool.Pool) {
 	return connect
 }
 
-func MigrateAllUp(ctx context.Context, c config.Config) {
-	//MigrateInternsUp(ctx, c)
-	MigrateCanditates(c)
-	MigrateCurators(c)
-	MigrateMentors(c)
-	MigrateHrs(c)
-}
-
 func MigratesUp(ctx context.Context, c config.Config) {
 	log := logger.GetLogger()
 	dbUrl := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=%s",
@@ -61,6 +53,7 @@ func MigratesUp(ctx context.Context, c config.Config) {
 	if err := m.Up(); err != nil {
 		log.Warn().Err(err).Msg("Unable to up migrations.")
 	}
+	log.Info().Msg("Migration up done successfully!")
 }
 
 func MigratesDown(ctx context.Context, c config.Config) {
@@ -79,20 +72,5 @@ func MigratesDown(ctx context.Context, c config.Config) {
 	if err := m.Down(); err != nil {
 		log.Warn().Err(err).Msg("Unable to down migrations.")
 	}
-}
-
-func MigrateCanditates(c config.Config) {
-
-}
-
-func MigrateMentors(c config.Config) {
-
-}
-
-func MigrateCurators(c config.Config) {
-
-}
-
-func MigrateHrs(c config.Config) {
-
+	log.Info().Msg("Migration down successfully!")
 }
