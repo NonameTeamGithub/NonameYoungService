@@ -19,7 +19,7 @@ func GetLogger() zerolog.Logger {
 		logger = zerolog.New(
 			zerolog.ConsoleWriter{
 				Out:        os.Stderr,
-				TimeFormat: time.UTC.String(),
+				TimeFormat: time.RFC822,
 				FormatCaller: func(i interface{}) string {
 					return "|" + filepath.Base(fmt.Sprintf("%s|", i))
 				},

@@ -1,6 +1,9 @@
 package auth
 
-import "context"
+import (
+	"context"
+	"github.com/gofiber/fiber/v2"
+)
 
 type User struct {
 }
@@ -14,11 +17,11 @@ type AuthRepository interface {
 }
 
 type AuthUseCase interface {
-	Register(ctx context.Context, user *User)
-	Authenticate(ctx context.Context, email, password string) (*User, error)
-	Authorize(ctx context.Context, user *User, permission string) bool
-	GrantPermission(ctx context.Context, user *User, permission string) error
-	RevokePermission(ctx context.Context, user *User, permission string) error
+	Register(ctx *fiber.Ctx, user *User)
+	Authenticate(ctx *fiber.Ctx, email, password string) (*User, error)
+	Authorize(ctx *fiber.Ctx, user *User, permission string) bool
+	GrantPermission(ctx *fiber.Ctx, user *User, permission string) error
+	RevokePermission(ctx *fiber.Ctx, user *User, permission string) error
 }
 
 type SignInUserRequest struct {

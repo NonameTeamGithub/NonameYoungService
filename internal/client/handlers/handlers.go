@@ -8,28 +8,40 @@ import (
 	"strings"
 )
 
-func InitHandlers(app *fiber.App) {
-	auth := app.Group("/api/auth")
+type AppContext struct {
+	app     *fiber.App
+	authUse auth.AuthUseCase
+	//userUse user.UserUseCase
+}
 
+func InitHandlers(client *AppContext) {
+	auth := client.app.Group("/api/auth")
 	//group.Post("/signup", signUp)
-	auth.Post("/signin", LogInHandler)
+	auth.Post("/signin", client.LogInHandler)
 	//account := app.Group("/api/account")
 	//account.Get("/", middleware.Authorize, getAccount)
 	//group.Post("/avatar", middleware.Authorize, updateAvatar)
 }
 
-func LogInHandler(ctx *fiber.Ctx) error {
+func (a *AppContext) LogInHandler(ctx *fiber.Ctx) error {
 	var body auth.SignInUserRequest
-	bodyParsingError := ctx.BodyParser(&body)
-	if bodyParsingError != nil {
+	err := ctx.BodyParser(&body)
+	if err != nil {
+		return err
+	}
+	if err != nil {
 		return response.Response(response.ResponseParams{
 			Ctx:    ctx,
 			Info:   constants.ResponseMessages.InternalServerError,
 			Status: fiber.StatusInternalServerError,
 		})
 	}
-	email := body.Email
-	password := body.Password
+	user, err := a.authUse.Authenticate()
+	if err != nil {
+		return err
+	} else {
+
+	}
 	if email == "" || password == "" {
 		return response.Response(response.ResponseParams{
 			Ctx:    ctx,
@@ -46,7 +58,14 @@ func LogInHandler(ctx *fiber.Ctx) error {
 			Status: fiber.StatusBadRequest,
 		})
 	}
-
+	return response.Response(response.ResponseParams{
+		Ctx: ctx,
+		Data: fiber.Map{
+			"check": "true",
+			"token": token,
+			"user":  user,
+		},
+	})
 	//// load User schema
 	//UserCollection := Instance.Database.Collection("User")
 	//
@@ -108,15 +127,7 @@ func LogInHandler(ctx *fiber.Ctx) error {
 	//		Status: fiber.StatusInternalServerError,
 	//	})
 	//}
-	//
-	return response.Response(response.ResponseParams{
-		Ctx: ctx,
-		Data: fiber.Map{
-			"check": "true",
-			//"token": token,
-			//"user":  userRecord,
-		},
-	})
+	// )
 }
 
 //func SignUpHandler(ctx *fiber.Ctx) error {

@@ -5,6 +5,8 @@ import (
 	"context"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"os"
+	"time"
 )
 
 func NewClient(ctx context.Context) *fiber.App {
@@ -50,7 +52,16 @@ func NewClient(ctx context.Context) *fiber.App {
 		ColorScheme:                  fiber.Colors{},
 		RequestMethods:               nil,
 	})
-	app.Use(logger.New())
+	app.Use(logger.New(logger.Config{
+		Next:         nil,
+		Done:         nil,
+		CustomTags:   nil,
+		Format:       "${time} | ${status}  ${latency} | ${method} | ${path}\n",
+		TimeFormat:   time.RFC822,
+		TimeZone:     "",
+		TimeInterval: 0,
+		Output:       os.Stdout,
+	}))
 	handlers.InitHandlers(app)
 	return app
 }
