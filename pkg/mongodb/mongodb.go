@@ -5,6 +5,7 @@ import (
 	"InternService/internal/storage/mongodb/repository"
 	"InternService/pkg/logger"
 	"context"
+	"fmt"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
@@ -12,7 +13,13 @@ import (
 
 func GetMongoConn(ctx context.Context, c config.Config) (repository.MongoInstance, error) {
 	log := logger.GetLogger()
-	client, clientError := mongo.NewClient(options.Client().ApplyURI(c.MongoDB.DatabaseConnection))
+	dbUri := fmt.Sprintf("mongodb://%s:%s@%s:%s",
+		c.MongoDB.User,
+		c.MongoDB.Pass,
+		c.MongoDB.Host,
+		c.MongoDB.Port,
+	)
+	client, clientError := mongo.NewClient(options.Client().ApplyURI(dbUri))
 	if clientError != nil {
 		log.Warn().Err(clientError).Msg("Unable to get mongoClient.")
 		return repository.MongoInstance{}, clientError
@@ -20,7 +27,7 @@ func GetMongoConn(ctx context.Context, c config.Config) (repository.MongoInstanc
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	connectionError := client.Connect(ctx)
-	db := client.Database(c.MongoDB.DatabaseName)
+	db := client.Database(c.MongoDB.Dbname)
 
 	if connectionError != nil {
 		log.Warn().Err(connectionError).Msg("Unable to connect to mongo db.")

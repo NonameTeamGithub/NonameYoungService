@@ -4,18 +4,21 @@ import (
 	"InternService/internal/auth"
 	"InternService/internal/utilities/constants"
 	"InternService/internal/utilities/response"
+	"fmt"
 	"github.com/gofiber/fiber/v2"
+	"github.com/rs/zerolog"
 )
 
 type AppContext struct {
-	app     *fiber.App
-	authUse auth.AuthUseCase
+	Log     zerolog.Logger
+	App     *fiber.App
+	AuthUse auth.AuthUseCase
 	//userUse user.UserUseCase
 }
 
 func InitHandlers(client *AppContext) {
-	auth := client.app.Group("/api/auth")
-	//group.Post("/signup", signUp)
+	auth := client.App.Group("/api/auth")
+	auth.Post("/signup", client.SignUpHandler)
 	auth.Post("/signin", client.LogInHandler)
 	//account := app.Group("/api/account")
 	//account.Get("/", middleware.Authorize, getAccount)
@@ -32,7 +35,7 @@ func (a *AppContext) LogInHandler(ctx *fiber.Ctx) error {
 			Status: fiber.StatusInternalServerError,
 		})
 	}
-	user, token, err := a.authUse.Authenticate(ctx, body.Email, body.Password)
+	user, token, err := a.AuthUse.Authenticate(ctx, body.Email, body.Password)
 	if err != nil {
 		return err
 	}
@@ -119,12 +122,6 @@ func (a *AppContext) SignUpHandler(ctx *fiber.Ctx) error {
 			Status: fiber.StatusInternalServerError,
 		})
 	}
-	a.authUse.Register(ctx, body)
-	return response.Response(response.ResponseParams{
-		Ctx: ctx,
-		Data: fiber.Map{
-			"token": token,
-			"user":  createdUser,
-		},
-	})
+	fmt.Println(body)
+	return a.AuthUse.Register(ctx, body)
 }

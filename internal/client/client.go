@@ -1,67 +1,37 @@
 package client
 
 import (
+	"InternService/config"
+	"InternService/internal/auth/repository"
+	"InternService/internal/auth/usecase"
 	"InternService/internal/client/handlers"
+	"InternService/pkg/logger"
+	"InternService/pkg/mongodb"
 	"context"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/logger"
+	fiberLogger "github.com/gofiber/fiber/v2/middleware/logger"
 	"os"
 	"time"
 )
 
-func NewClient(ctx context.Context) *fiber.App {
+func NewClient(ctx context.Context, config config.Config) *fiber.App {
+	log := logger.GetLogger()
 	app := fiber.New(fiber.Config{
-		Prefork:                      false,
-		ServerHeader:                 "",
-		StrictRouting:                false,
-		CaseSensitive:                false,
-		Immutable:                    false,
-		UnescapePath:                 false,
-		ETag:                         false,
-		BodyLimit:                    0,
-		Concurrency:                  0,
-		Views:                        nil,
-		ViewsLayout:                  "",
-		PassLocalsToViews:            false,
-		ReadTimeout:                  0,
-		WriteTimeout:                 0,
-		IdleTimeout:                  0,
-		ReadBufferSize:               0,
-		WriteBufferSize:              0,
-		CompressedFileSuffix:         "",
-		ProxyHeader:                  "",
-		GETOnly:                      false,
-		ErrorHandler:                 nil,
-		DisableKeepalive:             false,
-		DisableDefaultDate:           false,
-		DisableDefaultContentType:    false,
-		DisableHeaderNormalizing:     false,
-		DisableStartupMessage:        false,
-		AppName:                      "NonameYoungService",
-		StreamRequestBody:            false,
-		DisablePreParseMultipartForm: false,
-		ReduceMemoryUsage:            false,
-		JSONEncoder:                  nil,
-		JSONDecoder:                  nil,
-		XMLEncoder:                   nil,
-		Network:                      "",
-		EnableTrustedProxyCheck:      false,
-		TrustedProxies:               nil,
-		EnableIPValidation:           false,
-		EnablePrintRoutes:            false,
-		ColorScheme:                  fiber.Colors{},
-		RequestMethods:               nil,
+		DisableStartupMessage: true,
+		AppName:               "NonameYoungService",
 	})
-	app.Use(logger.New(logger.Config{
-		Next:         nil,
-		Done:         nil,
-		CustomTags:   nil,
-		Format:       "${time} | ${status}  ${latency} | ${method} | ${path}\n",
-		TimeFormat:   time.RFC822,
-		TimeZone:     "",
-		TimeInterval: 0,
-		Output:       os.Stdout,
+	app.Use(fiberLogger.New(fiberLogger.Config{
+		Format:     "${time} | ${status}  ${latency} | ${method} | ${path}\n",
+		TimeFormat: time.RFC822,
+		Output:     os.Stdout,
 	}))
-	handlers.InitHandlers(app)
+	mongo, err := mongodb.GetMongoConn(ctx, config)
+	if err != nil {
+		log.Warn().Err(err).Msg("Unable to connect to mongo")
+	}
+	authR := repository.NewAuthRepository(mongo)
+	authU := usecase.NewUseCase(authR)
+	appContext := handlers.AppContext{log, app, authU}
+	handlers.InitHandlers(&appContext)
 	return app
 }

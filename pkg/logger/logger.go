@@ -18,7 +18,7 @@ func GetLogger() zerolog.Logger {
 		c := color.New(color.FgRed)
 		logger = zerolog.New(
 			zerolog.ConsoleWriter{
-				Out:        os.Stderr,
+				Out:        os.Stdout,
 				TimeFormat: time.RFC822,
 				FormatCaller: func(i interface{}) string {
 					return "|" + filepath.Base(fmt.Sprintf("%s|", i))

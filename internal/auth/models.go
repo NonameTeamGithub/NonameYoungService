@@ -6,7 +6,7 @@ import (
 )
 
 type AuthRepository interface {
-	CreateUser(ctx *fiber.Ctx, user User) error
+	CreateUser(ctx *fiber.Ctx, user User, password string) (string, *User, error)
 	GetUserById(ctx context.Context, id int) error
 	GetUserByEmail(ctx *fiber.Ctx, email string) error
 	Update(ctx context.Context, user *User) error
@@ -34,18 +34,18 @@ type SignUpUserRequest struct {
 
 type User struct {
 	AvatarLink string `json:"avatarLink"`
-	Email      string `json:"email"`
-	Name       string `json:"name"`
-	Role       string `json:"role"`
-	Created    int64  `json:"created"`
+	Email      string `json:"email" bson:"email"`
+	Name       string `json:"name" bson:"name"`
+	Role       string `json:"role" bson:"role"`
+	Created    int64  `json:"created" bson:"created"`
 	ID         string `json:"id,omitempty" bson:"_id,omitempty"`
-	Updated    int64  `json:"updated"`
+	Updated    int64  `json:"updated" bson:"updated"`
 }
 
 type Password struct {
-	Hash    string `json:"hash"`
+	Hash    string `json:"hash" bson:"hash"`
 	UserId  string `json:"userId" bson:"userId"`
-	Created int64  `json:"created"`
+	Created int64  `json:"created" bson:"created"`
 	ID      string `json:"id,omitempty" bson:"_id,omitempty"`
-	Updated int64  `json:"updated"`
+	Updated int64  `json:"updated" bson:"updated"`
 }

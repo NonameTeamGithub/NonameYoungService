@@ -2,26 +2,25 @@ package usecase
 
 import (
 	"InternService/internal/auth"
-	"InternService/internal/auth/repository"
 	"InternService/internal/utilities"
 	"InternService/internal/utilities/constants"
-	"InternService/internal/utilities/jwtokens"
 	"InternService/internal/utilities/response"
-	"context"
+	"InternService/pkg/logger"
 	"github.com/gofiber/fiber/v2"
-	"os"
-	"strconv"
+	"github.com/rs/zerolog"
 	"strings"
 )
 
 type AuthUseCase struct {
-	rep repository.Auth
+	log zerolog.Logger
+	rep auth.AuthRepository
 }
 
 func (a AuthUseCase) Register(ctx *fiber.Ctx, body auth.SignUpUserRequest) error {
 	// make sure that the role is correct
 	email, name, password, role := body.Email, body.Name, body.Password, body.Role
 	if email == "" || name == "" || password == "" || role == "" {
+		a.log.Warn().Msg("a empty body")
 		return response.Response(response.ResponseParams{
 			Ctx:    ctx,
 			Info:   constants.ResponseMessages.MissingData,
@@ -34,6 +33,7 @@ func (a AuthUseCase) Register(ctx *fiber.Ctx, body auth.SignUpUserRequest) error
 	trimmedRole := strings.TrimSpace(role)
 	if trimmedEmail == "" || trimmedName == "" ||
 		trimmedPassword == "" || trimmedRole == "" {
+		a.log.Warn().Msg("something trimmed wrong")
 		return response.Response(response.ResponseParams{
 			Ctx:    ctx,
 			Info:   constants.ResponseMessages.MissingData,
@@ -42,6 +42,7 @@ func (a AuthUseCase) Register(ctx *fiber.Ctx, body auth.SignUpUserRequest) error
 	}
 	roles := utilities.Values(constants.Roles)
 	if !utilities.IncludesString(roles, trimmedRole) {
+		a.log.Warn().Msg("someone string wrong")
 		return response.Response(response.ResponseParams{
 			Ctx:    ctx,
 			Info:   constants.ResponseMessages.InvalidData,
@@ -54,56 +55,27 @@ func (a AuthUseCase) Register(ctx *fiber.Ctx, body auth.SignUpUserRequest) error
 	}
 	now := utilities.MakeTimestamp()
 	NewUser := auth.User{
-		AvatarLink: "",
-		Email:      trimmedEmail,
-		Name:       trimmedName,
-		Role:       trimmedRole,
-		Created:    now,
-		ID:         "",
-		Updated:    now,
+		Email:   trimmedEmail,
+		Name:    trimmedName,
+		Role:    trimmedRole,
+		Created: now,
+		Updated: now,
 	}
-	err := a.rep.CreateUser(ctx, NewUser)
-	PasswordCollection, _ := a.rep.Mongo.GetCollection("Password")
-
-	// create password hash
-	hash, hashError := utilities.MakeHash(trimmedPassword)
-	if hashError != nil {
+	token, createdUser, err := a.rep.CreateUser(ctx, NewUser, trimmedPassword)
+	if err != nil {
 		return response.Response(response.ResponseParams{
 			Ctx:    ctx,
-			Info:   constants.ResponseMessages.InternalServerError,
-			Status: fiber.StatusInternalServerError,
+			Info:   constants.ResponseMessages.InvalidData,
+			Status: fiber.StatusBadRequest,
 		})
 	}
-	// create a new Password record and insert it
-	NewPassword := new(auth.Password)
-	NewPassword.Created = now
-	NewPassword.Hash = hash
-	NewPassword.ID = ""
-	NewPassword.Updated = now
-	NewPassword.UserId = createdUser.ID
-	_, insertionError = PasswordCollection.InsertOne(ctx.Context(), NewPassword)
-	if insertionError != nil {
-		return response.Response(response.ResponseParams{
-			Ctx:    ctx,
-			Info:   constants.ResponseMessages.InternalServerError,
-			Status: fiber.StatusInternalServerError,
-		})
-	}
-	accessExpiration, expirationError := strconv.Atoi(os.Getenv("TOKENS_ACCESS_EXPIRATION"))
-	if expirationError != nil {
-		accessExpiration = 24
-	}
-	token, tokenError := jwtokens.GenerateJWT(jwtokens.GenerateJWTParams{
-		ExpiresIn: int64(accessExpiration),
-		UserId:    createdUser.ID,
+	return response.Response(response.ResponseParams{
+		Ctx: ctx,
+		Data: fiber.Map{
+			"token": token,
+			"user":  createdUser,
+		},
 	})
-	if tokenError != nil {
-		return response.Response(response.ResponseParams{
-			Ctx:    ctx,
-			Info:   constants.ResponseMessages.InternalServerError,
-			Status: fiber.StatusInternalServerError,
-		})
-	}
 }
 
 func (a AuthUseCase) Authenticate(ctx *fiber.Ctx, email, password string) (*auth.User, string, error) {
@@ -123,7 +95,7 @@ func (a AuthUseCase) Authenticate(ctx *fiber.Ctx, email, password string) (*auth
 			Status: fiber.StatusBadRequest,
 		})
 	}
-
+	return &auth.User{}, "", nil
 }
 
 func (a AuthUseCase) Authorize(ctx *fiber.Ctx, user *auth.User, permission string) bool {
@@ -141,6 +113,6 @@ func (a AuthUseCase) RevokePermission(ctx *fiber.Ctx, user *auth.User, permissio
 	panic("implement me")
 }
 
-func NewUseCase(ctx context.Context) auth.AuthUseCase {
-	return &AuthUseCase{}
+func NewUseCase(authR auth.AuthRepository) auth.AuthUseCase {
+	return &AuthUseCase{logger.GetLogger(), authR}
 }

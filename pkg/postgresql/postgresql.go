@@ -92,6 +92,6 @@ func InitMigrationsOnStart(c config.Config) {
 	if err := m.Migrate(1); err != nil && err != migrate.ErrNoChange {
 		log.Warn().Err(err).Msg("Unable to rollback migrations.")
 	} else {
-		log.Info().Msg("Migration down successfully!")
+		log.Info().Msg("Migration on start successfully!")
 	}
 }

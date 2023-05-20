@@ -14,6 +14,10 @@ type ResponseMessagesStruct struct {
 }
 
 type RolesStruct struct {
-	Admin string
-	User  string
+	Admin     string
+	Intern    string
+	Candidate string
+	Curator   string
+	Mentor    string
+	Hr        string
 }

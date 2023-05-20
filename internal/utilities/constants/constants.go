@@ -15,6 +15,10 @@ var ResponseMessages = ResponseMessagesStruct{
 
 // Available user roles
 var Roles = RolesStruct{
-	Admin: "admin",
-	User:  "user",
+	Admin:     "admin",
+	Intern:    "intern",
+	Candidate: "candidate",
+	Curator:   "curator",
+	Mentor:    "mentor",
+	Hr:        "hr",
 }

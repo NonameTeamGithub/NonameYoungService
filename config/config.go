@@ -9,8 +9,13 @@ type Config struct {
 	RedisDB struct {
 	}
 	MongoDB struct {
-		DatabaseConnection string
-		DatabaseName       string
+		User             string
+		Pass             string
+		Host             string
+		Port             string
+		Dbname           string
+		DirectConnection string
+		MaxConns         string
 	}
 	PostgreSQLDB struct {
 		User     string

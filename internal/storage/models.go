@@ -10,7 +10,7 @@ type MongoStorage interface {
 	GetCollection(name string) (collection *mongo.Collection, err error)
 	SelectUserById(*fiber.Ctx)
 	SelectUserByEmail(ctx *fiber.Ctx, email string) error
-	InsertUser(ctx *fiber.Ctx, user auth.User) error
+	InsertUser(ctx *fiber.Ctx, NewUser auth.User, password string) (string, *auth.User, error)
 }
 
 type PostgresqlStorage interface {

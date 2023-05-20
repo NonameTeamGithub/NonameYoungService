@@ -3,6 +3,7 @@ module InternService
 go 1.20
 
 require (
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fatih/color v1.15.0
 	github.com/gofiber/fiber/v2 v2.46.0
 	github.com/golang-migrate/migrate/v4 v4.15.2
