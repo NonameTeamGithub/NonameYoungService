@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"InternService/internal/storage"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -10,6 +9,6 @@ type MongoInstance struct {
 	Database *mongo.Database
 }
 
-func NewMongoStorage(instance MongoInstance) storage.MongoStorage {
-	return &instance
-}
+//func NewMongoStorage(instance MongoInstance) storage.MongoStorage {
+//	return &instance
+//}

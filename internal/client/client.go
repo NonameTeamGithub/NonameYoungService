@@ -1,15 +1,19 @@
 package client
 
 import (
+	"InternService/config"
 	"InternService/internal/client/handlers"
+	"InternService/internal/user/candidate/repository"
 	"context"
+	"database/sql"
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"os"
 	"time"
 )
 
-func NewClient(ctx context.Context) *fiber.App {
+func NewClient(ctx context.Context, c config.Config) *fiber.App {
 	app := fiber.New(fiber.Config{
 		Prefork:                      false,
 		ServerHeader:                 "",
@@ -62,6 +66,21 @@ func NewClient(ctx context.Context) *fiber.App {
 		TimeInterval: 0,
 		Output:       os.Stdout,
 	}))
-	handlers.InitHandlers(app)
+	dbUrl := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=%s",
+		c.PostgreSQLDB.User,
+		c.PostgreSQLDB.Pass,
+		c.PostgreSQLDB.Host,
+		c.PostgreSQLDB.Port,
+		c.PostgreSQLDB.Dbname,
+		c.PostgreSQLDB.SSLMode)
+	db, _ := sql.Open("pgx", dbUrl)
+	//defer db.Close()
+	testRepository := repository.NewUserRepository(db)
+	aCont := handlers.AppContext{
+		App: app,
+		//AuthUse: ,
+		Storage: testRepository,
+	}
+	handlers.InitHandlers(&aCont)
 	return app
 }
