@@ -7,7 +7,6 @@ import (
 	"InternService/internal/utilities/constants"
 	"InternService/internal/utilities/jwtokens"
 	"errors"
-	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -34,13 +33,12 @@ func (m MongoInstance) SelectUserByEmail(ctx *fiber.Ctx, email string) error {
 		ctx.Context(),
 		bson.D{{Key: "email", Value: email}},
 	)
-	fmt.Println(existingRecord.Err())
-	existingUser := &auth.User{}
-	existingRecord.Decode(existingUser)
+	existingUser := auth.User{}
+	existingRecord.Decode(&existingUser)
 	if existingUser.ID != "" {
-		return errors.New("mongo. User not found")
+		return nil
 	}
-	return nil
+	return errors.New("UserNotFound")
 }
 
 func (m MongoInstance) InsertUser(ctx *fiber.Ctx, NewUser auth.User, password string) (string, *auth.User, error) {

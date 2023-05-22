@@ -38,11 +38,7 @@ func (a Auth) GetUserByEmail(ctx *fiber.Ctx, email string) error {
 	err := a.MongoInterface.SelectUserByEmail(ctx, email)
 	if err != nil {
 		a.logger.Warn().Err(err)
-		return response.Response(response.ResponseParams{
-			Ctx:    ctx,
-			Info:   constants.ResponseMessages.EmailAlreadyInUse,
-			Status: fiber.StatusBadRequest,
-		})
+		return err
 	}
 	return nil
 }

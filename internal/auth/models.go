@@ -28,6 +28,9 @@ type SignInUserRequest struct {
 
 type SignUpUserRequest struct {
 	Name string `json:"name"`
+	Surname string `json:"surname"`
+	Graduate string `json:"graduate"`
+	Vuz string `json:"vuz"`
 	Role string `json:"role"`
 	SignInUserRequest
 }

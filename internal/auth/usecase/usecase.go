@@ -51,7 +51,11 @@ func (a AuthUseCase) Register(ctx *fiber.Ctx, body auth.SignUpUserRequest) error
 	}
 	err := a.rep.GetUserByEmail(ctx, email)
 	if err != nil {
-		return err
+		return response.Response(response.ResponseParams{
+			Ctx:    ctx,
+			Info:   constants.ResponseMessages.InvalidData,
+			Status: fiber.StatusBadRequest,
+		})
 	}
 	now := utilities.MakeTimestamp()
 	NewUser := auth.User{
